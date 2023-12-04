@@ -1,0 +1,23 @@
+{
+  "name": "@zhuquejs/huangque",
+  "version": "0.0.1",
+  "description": "提供非同源页面通信方式、高效简洁",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
+  },
+  "keywords": [
+    "logger"
+  ],
+  "type": "module",
+  "main": "dist/qingniao.cjs.js",
+  "module": "dist/qingniao.esm-bundler.js",
+  "typings": "dist/types/index.d.ts",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.3",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2"
+  }
+}
