@@ -6,14 +6,19 @@ import { MessageType } from '../enum'
 export type Message<T = any> = {
   [_HUANGQUE_MESSAGE_PLATFORM]: typeof _HUANGQUE_MESSAGE_PLATFORM
   messageType: MessageType
-  uuid: string
+  uuid: '*' | string
   isMaster: boolean
   data: T
+}
+export type SlaveInfo = {
+  uuid: Message['uuid']
+  href: string,
+  messageHistory: Message[]
 }
 /**
  * @description slave stack中的订阅
  */
-export type MessageSlaveStack<T=any> = {
+export type MessageSlaveStack<T = any> = {
   messageType: MessageType
   callback: (message: T) => Promise<any> | any
   callbackType: 'AsyncFunction' | 'Function'

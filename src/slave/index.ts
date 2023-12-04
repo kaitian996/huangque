@@ -10,7 +10,7 @@ export class MessageSlave {
   private uuid: string
   private messageStack: MessageSlaveStack[]
   private debug: boolean
-  constructor(master: Window, debug: boolean) {
+  constructor(master: Window, debug: boolean = false) {
     if (!master) throw new Error(`Invalid master ${master}`)
     this.master = master
     this.uuid = Date.now().toString()
