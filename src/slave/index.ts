@@ -2,6 +2,7 @@ import { isAsyncFunction, isFunction } from '../utils/is'
 import { MessageType } from '../enum'
 import { Message, MessageSlaveStack } from '../types'
 import { _HUANGQUE_MESSAGE_PLATFORM } from '../constant'
+import { useDateFormat } from '../utils/hooks/useDateFormat'
 /**
  * @description MessageSlave 子页面运行对象
  */
@@ -10,10 +11,13 @@ export class MessageSlave {
   private uuid: string
   private messageStack: MessageSlaveStack[]
   private debug: boolean
-  constructor(master: Window, debug: boolean = false) {
+  public slaveName: string
+  constructor(master: Window, slaveName: string, debug: boolean = false) {
     if (!master) throw new Error(`Invalid master ${master}`)
+    if (!slaveName) throw new Error(`Invalid slave name ${slaveName}`)
     this.master = master
     this.uuid = Date.now().toString()
+    this.slaveName = slaveName
     this.messageStack = []
     this.debug = debug
     if (this.debug) window[_HUANGQUE_MESSAGE_PLATFORM] = this
@@ -45,7 +49,9 @@ export class MessageSlave {
    * @param data 发送的数据
    */
   async postMessage(
-    messageType: MessageType.MESSAGE_PAGE_READY | MessageType.MESSAGE_PAGE_POST,
+    messageType:
+      | MessageType.MESSAGE_SLAVE_READY
+      | MessageType.MESSAGE_SLAVE_POST,
     data: any,
   ) {
     const target: Message = {
@@ -53,6 +59,8 @@ export class MessageSlave {
       uuid: this.uuid,
       isMaster: false,
       data,
+      time: useDateFormat(),
+      slaveName: this.slaveName,
       [_HUANGQUE_MESSAGE_PLATFORM]: _HUANGQUE_MESSAGE_PLATFORM,
     }
     if (this.debug) {
@@ -64,7 +72,10 @@ export class MessageSlave {
     }
     this.master.postMessage(target, '*')
   }
-  start() {
+  /**
+   * @description 启动监听
+   */
+  startEventListener() {
     window.addEventListener('message', async (event: MessageEvent) => {
       const isTrustedMessage = event.data
         ? event.data[_HUANGQUE_MESSAGE_PLATFORM] === _HUANGQUE_MESSAGE_PLATFORM
