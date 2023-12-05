@@ -7,10 +7,12 @@ import { isAsyncFunction, isFunction } from '../utils/is'
 export class MessageMaster {
   private debug: boolean
   private slaveStack: SlaveInfo[]
+  private listener: ((event: MessageEvent) => Promise<void>) | undefined =
+    undefined
   constructor(debug: boolean = false) {
     this.slaveStack = []
     this.debug = debug
-    if (this.debug) window['_HUANGQUE_MESSAGE_PLATFORM'] = this
+    if (this.debug) window['_HUANGQUE_MESSAGE_PLATFORM_MASTER'] = this
   }
   /**
    * @param slaveName 子页面唯一名字
@@ -52,7 +54,7 @@ export class MessageMaster {
     })
   }
   /**
-   *
+   * @param slaveName {String} slave名称
    * @param messageType 发送的消息类型
    * @param data 发送的数据
    */
@@ -85,46 +87,59 @@ export class MessageMaster {
     slave.address = address
     slave.instance = window.open(address)
   }
+  /**
+   * @description 启动监听
+   */
   startEventListener(): void {
-    window.addEventListener('message', async (event: MessageEvent) => {
-      const isTrustedMessage = event.data
-        ? event.data[_HUANGQUE_MESSAGE_PLATFORM] === _HUANGQUE_MESSAGE_PLATFORM
-          ? true
+    window.addEventListener(
+      'message',
+      (this.listener = async (event: MessageEvent) => {
+        const isTrustedMessage = event.data
+          ? event.data[_HUANGQUE_MESSAGE_PLATFORM] ===
+            _HUANGQUE_MESSAGE_PLATFORM
+            ? true
+            : false
           : false
-        : false
-      //非此平台、非slave发送、非uuid，视为非法消息，进行屏蔽
-      if (!isTrustedMessage || event.data.isMaster) {
-        return console.error(`[Master]:不合法消息格式,message:`, event.data)
-      }
-      const targetData = event.data as Message
-      const slave = this.slaveStack.find(
-        (i) => i.slaveName === targetData.slaveName,
-      )
-      if (!slave)
-        return console.error(`slaveName ${targetData.slaveName} is not found`)
-      if (!slave.uuid) slave.uuid = targetData.uuid
-      // 进行消息匹配
-      for (let index = 0; index < slave.messageStack.length; index++) {
-        const messageItem = slave.messageStack[index]
-        if (messageItem.messageType === targetData.messageType) {
-          try {
-            if (messageItem.callbackType === 'AsyncFunction') {
-              await messageItem.callback.call(null, targetData)
-            } else {
-              messageItem.callback.call(null, targetData)
+        //非此平台、非slave发送、非uuid，视为非法消息，进行屏蔽
+        if (!isTrustedMessage || event.data.isMaster) {
+          return
+        }
+        const targetData = event.data as Message
+        const slave = this.slaveStack.find(
+          (i) => i.slaveName === targetData.slaveName,
+        )
+        if (!slave)
+          return console.error(`slaveName ${targetData.slaveName} is not found`)
+        if (!slave.uuid) slave.uuid = targetData.uuid
+        // 进行消息匹配
+        for (let index = 0; index < slave.messageStack.length; index++) {
+          const messageItem = slave.messageStack[index]
+          if (messageItem.messageType === targetData.messageType) {
+            try {
+              if (messageItem.callbackType === 'AsyncFunction') {
+                await messageItem.callback.call(null, targetData)
+              } else {
+                messageItem.callback.call(null, targetData)
+              }
+            } catch (error) {
+              console.error(error)
+            } finally {
+              // 需要删除只执行一次的数据
+              if (messageItem.remove) {
+                slave.messageStack.splice(index, 1)
+                index--
+              }
+              slave.messageHistory.push(targetData)
             }
-          } catch (error) {
-            console.error(error)
-          } finally {
-            // 需要删除只执行一次的数据
-            if (messageItem.remove) {
-              slave.messageStack.splice(index, 1)
-              index--
-            }
-            slave.messageHistory.push(targetData)
           }
         }
-      }
-    })
+      }),
+    )
+  }
+  /**
+   * @description 断开监听
+   */
+  stopEventListener() {
+    if (this.listener) window.removeEventListener('message', this.listener)
   }
 }
