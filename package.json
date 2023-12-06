@@ -13,6 +13,7 @@
   "main": "dist/qingniao.cjs.js",
   "module": "dist/qingniao.esm-bundler.js",
   "typings": "dist/types/index.d.ts",
+  "types": "./dist/types/index.d.ts",
   "author": "",
   "license": "ISC",
   "devDependencies": {

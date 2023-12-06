@@ -6,7 +6,7 @@ import { isAsyncFunction, isFunction } from '../utils/is'
 
 export class MessageMaster {
   private debug: boolean
-  private slaveStack: SlaveInfo[]
+  public slaveStack: SlaveInfo[]
   private listener: ((event: MessageEvent) => Promise<void>) | undefined =
     undefined
   constructor(debug: boolean = false) {

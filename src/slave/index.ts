@@ -14,10 +14,11 @@ export class MessageSlave {
   public slaveName: string
   private listener: ((event: MessageEvent) => Promise<void>) | undefined =
     undefined
-  constructor(master: Window, slaveName: string, debug: boolean = false) {
-    if (!master) throw new Error(`Invalid master ${master}`)
+  constructor(slaveName: string, debug: boolean = false) {
+    if (!window.opener)
+      console.error(`window opener is not available ${window.opener}`)
     if (!slaveName) throw new Error(`Invalid slave name ${slaveName}`)
-    this.master = master
+    this.master = window.opener
     this.uuid = Date.now().toString()
     this.slaveName = slaveName
     this.messageStack = []
